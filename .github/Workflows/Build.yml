@@ -1,0 +1,26 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import project
+        run: godot --headless --import || true
+
+      - name: Export debug APK
+        run: |
+          mkdir -p build
+          godot --headless --export-debug "Android" build/feast_serving.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: feast_serving_apk
+          path: build/feast_serving.apk
