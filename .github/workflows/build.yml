@@ -1,54 +1,41 @@
-name: Build APK
+name: Compile Godot APK
 
 on:
-  workflow_dispatch:
   push:
-
-env:
-  GODOT_VERSION: 4.3
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Export APK
     runs-on: ubuntu-latest
-
-    container:
-      image: barichello/godot-ci:4.3
-
+    
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Godot Export Templates
+      # تحديد إصدار محرك غودوت (تأكد من مطاقته للإصدار الذي صنعت به مشروعك، مثل 4.2 أو 4.3)
+      - name: Setup Godot Engine
+        uses: abarrak/godot-action@v2
+        with:
+          version: 4.3-stable
+          use-dotnet: false
+
+      - name: Setup Android SDK and Export Templates
         run: |
-          # إنشاء المجلدات المطلوبة في مسار المستخدم الجذر (Root) لأن الحاوية تعمل بصلاحيات Root
-          mkdir -p /root/.local/share/godot/export_templates/
-          mkdir -p /root/.config/godot/
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mkdir -v -p ~/.config/godot/
+          # تحميل قوالب التصدير الخاصة بأندرويد تلقائياً بناءً على إصدار غودوت
 
-          # التأكد من نسخ القوالب من مسار الحاوية الافتراضي إذا لزم الأمر
-          if [ -d "/root/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable" ]; then
-            echo "Export templates already exist."
-          else
-            echo "Templates path check..."
-          fi
+      - name: Create Build Directory
+        run: mkdir -p build
 
-      - name: Verify Java and Android SDK
+      - name: Export to Android APK
         run: |
-          java -version
-          echo "Android SDK Root: $ANDROID_SDK_ROOT"
-
-      - name: Import Project
-        run: |
-          godot --headless --editor --path . --quit
-
-      - name: Export Android APK
-        run: |
-          mkdir -p build
-          # تأكد من أن اسم الـ Preset في ملف export_presets.cfg مطابقة تماماً لكلمة "Android"
-          godot --headless --path . --export-debug "Android" build/feast_serving.apk
-          test -s build/feast_serving.apk
-
-      - name: Upload APK
+          godot --headless --export-release "Android" build/app.apk
+        
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Feast-Serving-APK
-          path: build/feast_serving.apk
+          name: game-apk
+          path: build/app.apk
