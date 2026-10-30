@@ -1,21 +1,39 @@
-name: Build Android APK
+name: Build APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+
+env:
+  GODOT_VERSION: 4.3
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     container:
       image: barichello/godot-ci:4.3
+
     steps:
-      - name: Checkout project
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Import Godot project
-        run: godot --headless --editor --path . --quit
+      - name: Setup Godot Android
+        run: |
+          mkdir -p ~/.config/godot
+          mkdir -p ~/.local/share/godot/export_templates
+
+          cp -a /root/.config/godot/. ~/.config/godot/
+          cp -a /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
+
+      - name: Setup Java
+        run: |
+          echo "Java SDK setup"
+          java -version
+
+      - name: Import Project
+        run: |
+          godot --headless --editor --path . --quit
 
       - name: Export Android APK
         run: |
@@ -26,6 +44,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: feast-serving-android-apk
+          name: Feast-Serving-APK
           path: build/feast_serving.apk
-          if-no-files-found: error
