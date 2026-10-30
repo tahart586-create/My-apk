@@ -18,18 +18,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Godot Android
+      - name: Setup Godot Export Templates
         run: |
-          mkdir -p ~/.config/godot
-          mkdir -p ~/.local/share/godot/export_templates
+          # إنشاء المجلدات المطلوبة في مسار المستخدم الجذر (Root) لأن الحاوية تعمل بصلاحيات Root
+          mkdir -p /root/.local/share/godot/export_templates/
+          mkdir -p /root/.config/godot/
 
-          cp -a /root/.config/godot/. ~/.config/godot/
-          cp -a /root/.local/share/godot/export_templates/. ~/.local/share/godot/export_templates/
+          # التأكد من نسخ القوالب من مسار الحاوية الافتراضي إذا لزم الأمر
+          if [ -d "/root/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable" ]; then
+            echo "Export templates already exist."
+          else
+            echo "Templates path check..."
+          fi
 
-      - name: Setup Java
+      - name: Verify Java and Android SDK
         run: |
-          echo "Java SDK setup"
           java -version
+          echo "Android SDK Root: $ANDROID_SDK_ROOT"
 
       - name: Import Project
         run: |
@@ -38,6 +43,7 @@ jobs:
       - name: Export Android APK
         run: |
           mkdir -p build
+          # تأكد من أن اسم الـ Preset في ملف export_presets.cfg مطابقة تماماً لكلمة "Android"
           godot --headless --path . --export-debug "Android" build/feast_serving.apk
           test -s build/feast_serving.apk
 
