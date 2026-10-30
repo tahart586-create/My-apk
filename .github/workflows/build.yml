@@ -14,28 +14,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # تحديد إصدار محرك غودوت (تأكد من مطاقته للإصدار الذي صنعت به مشروعك، مثل 4.2 أو 4.3)
-      - name: Setup Godot Engine
-        uses: abarrak/godot-action@v2
+      - name: Export Game
+        uses: firebelley/godot-export@v5.2.0
         with:
-          version: 4.3-stable
-          use-dotnet: false
+          godot: 4.3
+          # إذا كان اسم ملف المشروع الخاص بك مختلفاً، ضعه هنا (مثلاً project.godot)
+          # project: project.godot
 
-      - name: Setup Android SDK and Export Templates
-        run: |
-          mkdir -v -p ~/.local/share/godot/export_templates/
-          mkdir -v -p ~/.config/godot/
-          # تحميل قوالب التصدير الخاصة بأندرويد تلقائياً بناءً على إصدار غودوت
-
-      - name: Create Build Directory
-        run: mkdir -p build
-
-      - name: Export to Android APK
-        run: |
-          godot --headless --export-release "Android" build/app.apk
-        
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: game-apk
-          path: build/app.apk
+          path: /root/.local/share/godot/export/Android/app.apk
